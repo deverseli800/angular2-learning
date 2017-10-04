@@ -14,10 +14,10 @@ import { Component, OnInit, Inject, Input } from '@angular/core';
       <tbody>
         <tr *ngFor="let row of table">
           <td>{{row.label}}</td>
-          <td>{{row.zipValue}}</td>
-          <td>{{row.zipPercentage}}</td>
-          <td>{{row.countyValue}}</td>
-          <td>{{row.countyPercentage}}</td>
+          <td>{{row.zipValue | number}}</td>
+          <td>{{row.zipPercentage | percent}}</td>
+          <td>{{row.countyValue | number}}</td>
+          <td>{{row.countyPercentage | percent}}</td>
         </tr>
       </tbody>
     </table>
