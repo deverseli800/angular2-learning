@@ -5,13 +5,10 @@ import { Component, OnInit, Inject } from '@angular/core';
   template: `
     <table class="table table-striped">
       <thead>
-        <th>Description</th>
-        <th>2015 Estimates</th>
-        <th>East Village % Change 2010-2015</th>
-        <th>% Change 2015-2020</th>
-        <th>2015 Estimate</th>
-        <th>New York County % Change 2010-2015</th>
-        <th>% Change 2015-2020</th>
+        <th>2015 Households By Size</th>
+        <th>East Village</th>
+        <th>New York County</th>
+        <th>% Total</th>
       </thead>
       <tbody>
         <tr *ngFor="let row of table">
@@ -24,23 +21,32 @@ import { Component, OnInit, Inject } from '@angular/core';
 })
 export class OverviewTableComponent implements OnInit {
   overviewTableFields = {
-    'description' : {
+    '2015 Households By Size' : {
       'static': true,
       'variables': [
-        { value: 'universe totals' },
-        { value: 'population households'},
-        { value: 'average household size'},
+        { value: '1-person' },
+        { value: '2-person'},
+        { value: '3-person'},
       ]
     },
-    '2015 estimate' : {
+    'East Village' : {
       'static': false,
       'survey': 'acs5',
-      'geography': 'zip+code+tabulation+area',
-      'geoCensusValue': '10019',
+      'geography': [{ key:'zip+code+tabulation+area', value: '10009'}],
       'variables': [
-        {'field': 'B01001_001E'},
-        {'field': 'B11001_001E'},
-        {'field': 'B19013_001E'},
+        {'field': 'B11016_010E'},
+        {'field': 'B11016_003E'},
+        {'field': 'B11016_011E'},
+      ],
+    },
+    'New York County' : {
+      'static': false,
+      'survey': 'acs5',
+      'geography': [{ key:'county', value: '061'}, {key: 'in=state', value:'36'}],
+      'variables': [
+        {'field': 'B11016_010E'},
+        {'field': 'B11016_003E'},
+        {'field': 'B11016_011E'},
       ],
     }
   };
@@ -49,8 +55,6 @@ export class OverviewTableComponent implements OnInit {
   constructor(@Inject('census') private census) {}
 
   ngOnInit() {
-    console.log('do we have a census defined', this.census);
-   this.table = this.generateTable();
    this.getTableDataFromCensus();
   }
 
@@ -63,10 +67,18 @@ export class OverviewTableComponent implements OnInit {
         return dataObject.field;
       });
       if (!fieldBasePath.static) {
-        this.census.buildQuery('2015', fieldBasePath.survey, fieldBasePath.geography, queryFields, fieldBasePath.geoCensusValue);
+        this.census.buildQuery('2015', fieldBasePath.survey, fieldBasePath.geography, queryFields)
+          .then(response => {
+            fieldBasePath.variables.map((dataObject, index) => {
+              dataObject.value = response[1][index];
+            })
+            console.log('we got stuff back from promise', fieldBasePath);
+            this.table = this.generateTable();
+          }, error => {
+            console.log('this query did not work');
+          });
       }
 
-      console.log('what are our queryfields', queryFields);
     })
   }
 
@@ -80,8 +92,8 @@ export class OverviewTableComponent implements OnInit {
     const rows = Array.from(Array(maxLength)).map((value, i) => {
       console.log('what is our value?', i);
       return columnKeys.map((key) => {
-        if (this.overviewTableFields[key] && this.overviewTableFields[key][i]) {
-          return this.overviewTableFields[key][i].value;
+        if (this.overviewTableFields[key].variables && this.overviewTableFields[key]['variables'][i]) {
+          return this.overviewTableFields[key]['variables'][i].value;
         }
       });
     });

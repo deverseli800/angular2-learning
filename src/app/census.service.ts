@@ -15,10 +15,11 @@ export class CensusService {
   buildQuery(
     year = '2015',
     survey = 'acs5',
-    geography = 'zip+code+tabulation+area',
-    fieldsArr = ['B25010_001E', 'B01001_001E', 'B11001_001E', 'B19013_001E', 'B01001_001E'],
-    geographyValue ='10009') {
-    const queryString = `?get=${fieldsArr.join(',')}&for=${geography}:${geographyValue}`;
+    geography = [{ key:'zip+code+tabulation+area', value: '10009'}],
+    fieldsArr = ['B25010_001E', 'B01001_001E', 'B11001_001E', 'B19013_001E', 'B01001_001E']) {
+    const geographies = geography.map(geoObj => `${geoObj.key}:${geoObj.value}`).join('&');
+    console.log('our geographies', geographies);
+    const queryString = `?get=${fieldsArr.join(',')}&for=${geographies}`;
     const fullQuery = `${this.config.baseUrl}${year}/${survey}${queryString}`;
     console.log('our full query', fullQuery);
     return this.makeQuery(fullQuery);
@@ -30,7 +31,9 @@ export class CensusService {
       .toPromise()
       .then(response => {
         const queryResults = response.json();
-        console.log(queryResults);
+        return queryResults;
+      }, error => {
+        return error;
       });
   }
 }
