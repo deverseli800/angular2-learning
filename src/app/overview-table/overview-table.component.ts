@@ -1,4 +1,5 @@
-import { Component, OnInit, Inject, Input } from '@angular/core';
+import { Component, OnInit, Inject, Input, SimpleChanges } from '@angular/core';
+import {setBindingDebugInfoForChanges} from "@angular/core/src/linker/view_utils";
 
 @Component({
   selector: 'app-overview-table',
@@ -31,16 +32,16 @@ export class OverviewTableComponent implements OnInit {
       'countyNumber' : '047',
       'countyName' : `King's County`,
       'neighborhood' : {
-        'name' : 'East Village',
-        'zipCode' : '10009',
+        'name' : 'Park Slope',
+        'zipCode' : '11215',
       },
     },
     'manhattan' : {
       'countyNumber' : '061',
       'countyName' : 'New York County',
       'neighborhood' : {
-        'name' : 'Park Slope',
-        'zipCode' : '11215',
+        'name' : 'East Village',
+        'zipCode' : '10009',
       }
     }
   };
@@ -89,8 +90,16 @@ export class OverviewTableComponent implements OnInit {
   }
 
   ngOnInit() {
-    console.log('what is our borough?', this.borough);
    this.getTableDataFromCensus();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    console.log(changes);
+    if (changes) {
+      if (changes.hasOwnProperty('borough')) {
+        this.getTableDataFromCensus();
+      }
+    }
   }
 
   getTableDataFromCensus() {
@@ -101,7 +110,7 @@ export class OverviewTableComponent implements OnInit {
     }, {key: 'in=state', value: '36'}], this.dataForQuery.fields)
     const zipPromise = this.census.buildQuery('2015', this.dataForQuery.survey, [{
       key: 'zip+code+tabulation+area',
-      value: '10009'
+      value: this.boroughLookup[this.borough].neighborhood.zipCode
     }], this.dataForQuery.fields);
     Promise.all([zipPromise, countyPromise]).then(values => {
       this.generateTableFromQueryResults(values);
@@ -111,7 +120,6 @@ export class OverviewTableComponent implements OnInit {
   generateTableFromQueryResults(results) {
     const zipDataArray = results[0][1];
     const countyDataArray = results[1][1];
-    console.log(`our data ${zipDataArray}`);
     const rows = this.surveyFieldLabels.map((label, index) => {
       let dataObject = {
         label: label,
@@ -123,7 +131,6 @@ export class OverviewTableComponent implements OnInit {
 
       return dataObject;
     });
-    console.log('our rows from the table', rows);
     this.table = rows;
   }
 }

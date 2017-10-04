@@ -18,10 +18,8 @@ export class CensusService {
     geography = [{ key:'zip+code+tabulation+area', value: '10009'}],
     fieldsArr = ['B25010_001E', 'B01001_001E', 'B11001_001E', 'B19013_001E', 'B01001_001E']) {
     const geographies = geography.map(geoObj => `${geoObj.key}:${geoObj.value}`).join('&');
-    console.log('our geographies', geographies);
     const queryString = `?get=${fieldsArr.join(',')}&for=${geographies}`;
     const fullQuery = `${this.config.baseUrl}${year}/${survey}${queryString}`;
-    console.log('our full query', fullQuery);
     return this.makeQuery(fullQuery);
   }
 
