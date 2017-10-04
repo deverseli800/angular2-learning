@@ -7,8 +7,8 @@ export class BoroughService {
     { name: `manhattan`, county: `New York` },
     { name: `brooklyn`, county: `King's County` },
   ];
-  update() {
-    console.log(`we have received a transmission`);
+  update(borough) {
+    this.selected = borough;
   }
   constructor() { }
 
