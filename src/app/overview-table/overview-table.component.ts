@@ -1,18 +1,23 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, Input } from '@angular/core';
 
 @Component({
   selector: 'app-overview-table',
   template: `
     <table class="table table-striped">
       <thead>
-        <th>2015 Households By Size</th>
-        <th>East Village</th>
-        <th>New York County</th>
+        <th></th>
+        <th>{{borough.neighborhood.name}}</th>
+        <th>% Total</th>
+        <th>{{borough.countyName}}</th>
         <th>% Total</th>
       </thead>
       <tbody>
         <tr *ngFor="let row of table">
-          <td *ngFor="let field of row">{{field}}</td>
+          <td>{{row.label}}</td>
+          <td>{{row.zipValue}}</td>
+          <td>{{row.zipPercentage}}</td>
+          <td>{{row.countyValue}}</td>
+          <td>{{row.countyPercentage}}</td>
         </tr>
       </tbody>
     </table>
@@ -20,6 +25,30 @@ import { Component, OnInit, Inject } from '@angular/core';
   styles: []
 })
 export class OverviewTableComponent implements OnInit {
+  boroughLookup = {
+    'brooklyn' : {
+      'countyNumber' : '047',
+      'countyName' : `King's County`,
+      'neighborhood' : {
+        'name' : 'East Village',
+        'zipCode' : '10009',
+      },
+    },
+    'manhattan' : {
+      'countyNumber' : '061',
+      'countyName' : 'New York County',
+      'neighborhood' : {
+        'name' : 'Park Slope',
+        'zipCode' : '11215',
+      }
+    }
+  };
+  dataForQuery = {
+    survey: 'acs5/profile',
+    fields : ['DP03_0018E', 'DP03_0019E', 'DP03_0020E', 'DP03_0020E'],
+  };
+  surveyFieldLabels = ['2015 Est. Pop 16+ by Transp. to Work', 'Drove Alone', 'Carpooled'];
+
   overviewTableFields = {
     '2015 Households By Size' : {
       'static': true,
@@ -52,51 +81,48 @@ export class OverviewTableComponent implements OnInit {
   };
 
   table = [];
-  constructor(@Inject('census') private census) {}
+  @Input() borough;
+
+  constructor(@Inject('census') private census) {
+    this.borough = this.boroughLookup['manhattan'];
+  }
 
   ngOnInit() {
    this.getTableDataFromCensus();
   }
 
   getTableDataFromCensus() {
-    const columnKeys = Object.keys(this.overviewTableFields);
-    columnKeys.map((columnKey) => {
-      const fieldBasePath = this.overviewTableFields[columnKey];
-      const queryFields = fieldBasePath.variables.map((dataObject) => {
-        console.log('what data objects are these?', dataObject);
-        return dataObject.field;
-      });
-      if (!fieldBasePath.static) {
-        this.census.buildQuery('2015', fieldBasePath.survey, fieldBasePath.geography, queryFields)
-          .then(response => {
-            fieldBasePath.variables.map((dataObject, index) => {
-              dataObject.value = response[1][index];
-            })
-            console.log('we got stuff back from promise', fieldBasePath);
-            this.table = this.generateTable();
-          }, error => {
-            console.log('this query did not work');
-          });
-      }
-
-    })
+    //get zip level info
+    const countyPromise = this.census.buildQuery('2015', this.dataForQuery.survey, [{
+      key: 'county',
+      value: this.borough.countyNumber
+    }, {key: 'in=state', value: '36'}], this.dataForQuery.fields)
+    const zipPromise = this.census.buildQuery('2015', this.dataForQuery.survey, [{
+      key: 'zip+code+tabulation+area',
+      value: '10009'
+    }], this.dataForQuery.fields);
+    Promise.all([zipPromise, countyPromise]).then(values => {
+      console.log('got our data back', values);
+      this.generateTableFromQueryResults(values);
+    });
   }
 
-  generateTable() {
-    const columnFields = Object.keys(this.overviewTableFields).map(columnName => this.overviewTableFields[columnName].variables);
-    const maxLength = columnFields.reduce((a,b) => {
-      return a.length > b.length ? a.length : b.length;
+  generateTableFromQueryResults(results) {
+    const zipDataArray = results[0][1];
+    const countyDataArray = results[1][1];
+    console.log(`our data ${zipDataArray}`);
+    const rows = this.surveyFieldLabels.map((label, index) => {
+      let dataObject = {
+        label: label,
+        zipValue: zipDataArray[index],
+        zipPercentage: index !== 0 ? parseFloat(zipDataArray[index]) / zipDataArray[0] : null,
+        countyValue: countyDataArray[index],
+        countyPercentage: index !== 0 ? parseFloat(countyDataArray[index]) / countyDataArray[0] : null
+      };
+
+      return dataObject;
     });
-    const columnKeys = Object.keys(this.overviewTableFields);
-    console.log([...Array(maxLength)].map(item => console.log('item', item)));
-    const rows = Array.from(Array(maxLength)).map((value, i) => {
-      console.log('what is our value?', i);
-      return columnKeys.map((key) => {
-        if (this.overviewTableFields[key].variables && this.overviewTableFields[key]['variables'][i]) {
-          return this.overviewTableFields[key]['variables'][i].value;
-        }
-      });
-    });
-    return rows;
+    console.log('our rows from the table', rows);
+    this.table = rows;
   }
 }
