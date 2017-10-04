@@ -5,10 +5,10 @@ import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
 import { SimpleFormComponent } from './simple-form/simple-form.component';
-import { MailService } from "./mail.service";
 import { BoroughPickerComponent } from './borough-picker/borough-picker.component'
 import { BoroughService } from "./borough.service";
 import { OverviewTableComponent } from './overview-table/overview-table.component';
+import { CensusService } from "./census.service";
 
 @NgModule({
   declarations: [
@@ -23,7 +23,7 @@ import { OverviewTableComponent } from './overview-table/overview-table.componen
     FormsModule,
     HttpModule
   ],
-  providers: [{provide: 'boroughData', useClass: BoroughService}],
+  providers: [{provide: 'census', useClass: CensusService}, {provide: 'boroughData', useClass: BoroughService}],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

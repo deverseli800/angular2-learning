@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 
 @Component({
   selector: 'app-overview-table',
@@ -37,11 +37,13 @@ export class OverviewTableComponent implements OnInit {
   };
 
   table = [];
-  constructor() {
+  constructor(@Inject('census') public census) {
+    console.log('we have census on constrcutor', census, census.buildQuery());
   }
 
   ngOnInit() {
    this.table = this.generateTable();
+    console.log("do we have access to the methods?", this.census, this.census.buildQuery());
   }
 
   generateTable() {
@@ -58,7 +60,6 @@ export class OverviewTableComponent implements OnInit {
           return this.overviewTableFields[key][i].value;
         }
       });
-
     });
     return rows;
   }
