@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { Http, Response } from "@angular/http";
+import { Http, Response } from '@angular/http';
 import 'rxjs/add/operator/toPromise';
 @Component({
   selector: 'app-simple-form',
@@ -28,12 +28,14 @@ export class SimpleFormComponent implements OnInit {
   }
 
   ngOnInit() {
-    let url = `https://randomuser.me/api/?results=10`;
+    const url = `https://randomuser.me/api/?results=10`;
     return this.http.get(url)
       .toPromise()
       .then(response => {
         response.json().data;
         console.log(`the response from our call ${response}`);
+      }, error => {
+        console.log(`we could not perform this query`);
       });
   }
 

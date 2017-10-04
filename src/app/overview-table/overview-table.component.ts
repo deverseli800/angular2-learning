@@ -24,30 +24,54 @@ import { Component, OnInit, Inject } from '@angular/core';
 })
 export class OverviewTableComponent implements OnInit {
   overviewTableFields = {
-    'description' : [
-      { value: 'universe totals' },
-      { value: 'population households'},
-      { value: 'average household size'},
-    ],
-    '2015 estimate' : [
-      {'survey' : 'acs5', 'field' : 'B01001_001E'},
-      {'survey' : 'acs5', 'field' : 'B01001_001E'},
-      {'survey' : 'acs5', 'field' : 'B01001_001E'},
-    ],
+    'description' : {
+      'static': true,
+      'variables': [
+        { value: 'universe totals' },
+        { value: 'population households'},
+        { value: 'average household size'},
+      ]
+    },
+    '2015 estimate' : {
+      'static': false,
+      'survey': 'acs5',
+      'geography': 'zip+code+tabulation+area',
+      'geoCensusValue': '10019',
+      'variables': [
+        {'field': 'B01001_001E'},
+        {'field': 'B11001_001E'},
+        {'field': 'B19013_001E'},
+      ],
+    }
   };
 
   table = [];
-  constructor(@Inject('census') public census) {
-    console.log('we have census on constrcutor', census, census.buildQuery());
-  }
+  constructor(@Inject('census') private census) {}
 
   ngOnInit() {
+    console.log('do we have a census defined', this.census);
    this.table = this.generateTable();
-    console.log("do we have access to the methods?", this.census, this.census.buildQuery());
+   this.getTableDataFromCensus();
+  }
+
+  getTableDataFromCensus() {
+    const columnKeys = Object.keys(this.overviewTableFields);
+    columnKeys.map((columnKey) => {
+      const fieldBasePath = this.overviewTableFields[columnKey];
+      const queryFields = fieldBasePath.variables.map((dataObject) => {
+        console.log('what data objects are these?', dataObject);
+        return dataObject.field;
+      });
+      if (!fieldBasePath.static) {
+        this.census.buildQuery('2015', fieldBasePath.survey, fieldBasePath.geography, queryFields, fieldBasePath.geoCensusValue);
+      }
+
+      console.log('what are our queryfields', queryFields);
+    })
   }
 
   generateTable() {
-    const columnFields = Object.keys(this.overviewTableFields).map(columnName => this.overviewTableFields[columnName]);
+    const columnFields = Object.keys(this.overviewTableFields).map(columnName => this.overviewTableFields[columnName].variables);
     const maxLength = columnFields.reduce((a,b) => {
       return a.length > b.length ? a.length : b.length;
     });
