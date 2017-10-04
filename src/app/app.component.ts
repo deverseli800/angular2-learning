@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component, Inject} from '@angular/core';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +6,12 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'app works!';
+  title = `Demographic Overview`;
+  onUpdate(borough) {
+    console.log('we are updating stuff so now we can make a call to the service', borough);
+    //this.boroughData.update(borough);
+  }
+
+  constructor(@Inject('boroughData') private boroughData) {
+  }
 }
