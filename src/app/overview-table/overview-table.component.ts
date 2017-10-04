@@ -3,12 +3,13 @@ import { Component, OnInit, Inject, Input } from '@angular/core';
 @Component({
   selector: 'app-overview-table',
   template: `
+    <h1>{{borough}}</h1>
     <table class="table table-striped">
       <thead>
         <th></th>
-        <th>{{borough.neighborhood.name}}</th>
+        <th>{{boroughLookup[borough].neighborhood.name}}</th>
         <th>% Total</th>
-        <th>{{borough.countyName}}</th>
+        <th>{{boroughLookup[borough].countyName}}</th>
         <th>% Total</th>
       </thead>
       <tbody>
@@ -88,6 +89,7 @@ export class OverviewTableComponent implements OnInit {
   }
 
   ngOnInit() {
+    console.log('what is our borough?', this.borough);
    this.getTableDataFromCensus();
   }
 
@@ -95,14 +97,13 @@ export class OverviewTableComponent implements OnInit {
     //get zip level info
     const countyPromise = this.census.buildQuery('2015', this.dataForQuery.survey, [{
       key: 'county',
-      value: this.borough.countyNumber
+      value: this.boroughLookup[this.borough].countyNumber
     }, {key: 'in=state', value: '36'}], this.dataForQuery.fields)
     const zipPromise = this.census.buildQuery('2015', this.dataForQuery.survey, [{
       key: 'zip+code+tabulation+area',
       value: '10009'
     }], this.dataForQuery.fields);
     Promise.all([zipPromise, countyPromise]).then(values => {
-      console.log('got our data back', values);
       this.generateTableFromQueryResults(values);
     });
   }

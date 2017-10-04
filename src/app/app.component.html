@@ -3,5 +3,5 @@
 </h1>
 <div class="container">
   <app-borough-picker (update)="onUpdate($event.borough)" [boroughObjects]="boroughData"></app-borough-picker>
-  <app-overview-table></app-overview-table>
+  <app-overview-table [borough]="boroughData.selected"></app-overview-table>
 </div>
